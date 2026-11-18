@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#461D7C">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bevan&display=swap">
+<title>Game Day DJ</title>
+<style>
+:root{
+  --purple:#461D7C; --deep:#2A0F4D; --mid:#5B3290; --lav:#C9B6E6;
+  --bg:#0a0512; --panel:#1a0d2e; --panel2:#2A0F4D; --line:#3a2361; --text:#ffffff; --dim:#a99cc0;
+  --accent:#C9B6E6; --green:#ffffff; --red:#ffb4b4;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.35 Arial,Helvetica,sans-serif}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(96px + env(safe-area-inset-bottom)) env(safe-area-inset-left)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;border-radius:10px;background:var(--panel2);padding:10px 14px}
+button:active{transform:scale(.97)}
+button.primary{background:#fff;color:var(--purple);font-weight:700}
+button.ghost{background:transparent;border:1px solid var(--line)}
+button.danger{background:#fff;color:#000;font-weight:700}
+input,select,textarea{background:#140a24;border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{min-height:140px;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+label{display:block;font-size:11px;font-weight:700;color:var(--lav);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.12em}
+header{position:sticky;top:0;z-index:10;background:var(--purple);box-shadow:0 2px 0 #000;padding:10px 14px}
+.hrow{display:flex;gap:10px;align-items:center}
+h1{font-family:Bevan,Arial,serif;font-weight:400;font-size:19px;margin:0;white-space:nowrap}
+h1 span{color:var(--lav)}
+header select,header .ghost{background:rgba(0,0,0,.28);border-color:rgba(255,255,255,.18)}
+#deviceSel{flex:1;min-width:0;padding:8px 10px}
+nav{display:flex;gap:6px;margin-top:10px}
+nav button{flex:1;padding:8px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.15);font-weight:700;color:var(--lav)}
+nav button.on{background:#fff;color:var(--purple);border-color:#fff}
+main{padding:14px;max-width:1100px;margin:0 auto}
+.view{display:none}.view.on{display:block}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px}
+.chip{white-space:nowrap;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:13px;color:var(--dim)}
+.chip.on{background:#fff;color:var(--purple);border-color:#fff}
+.cat{font-size:12px;font-weight:700;color:var(--lav);text-transform:uppercase;letter-spacing:.16em;margin:18px 0 8px}
+.cat::before{content:"★  ";color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.cue{position:relative;overflow:hidden;text-align:left;min-height:92px;padding:12px 12px 14px;background:var(--c,#461D7C);color:var(--fg,#fff);border:2px solid transparent;border-radius:14px;display:flex;flex-direction:column;justify-content:space-between}
+.cue.dk{border-color:var(--mid)}
+.cue .nm{font-weight:700;font-size:17px;line-height:1.12;text-transform:uppercase;letter-spacing:.02em}
+.cue .tr{font-size:12px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:6px}
+.cue .rg{font-size:11px;opacity:.7;font-variant-numeric:tabular-nums}
+.cue .key{position:absolute;top:6px;right:34px;font-size:11px;opacity:.55}
+.cue .ed{position:absolute;top:2px;right:2px;background:transparent;padding:6px 8px;font-size:14px;opacity:.7}
+.cue.playing{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.25),0 0 22px rgba(201,182,230,.45)}
+.cue .bar{position:absolute;left:0;bottom:0;height:5px;background:currentColor;width:0}
+.empty{color:var(--dim);text-align:center;padding:40px 10px}
+.res{display:flex;gap:10px;align-items:center;padding:8px;border-bottom:1px solid var(--line)}
+.res img{width:48px;height:48px;border-radius:6px;object-fit:cover;background:var(--panel2)}
+.res .meta{flex:1;min-width:0}
+.res .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.res .a{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.card h3{margin:0 0 6px;font-family:Bevan,Arial,serif;font-weight:400;font-size:17px}
+.small{font-size:13px;color:var(--dim)}
+code{background:var(--panel2);padding:2px 6px;border-radius:6px;font-size:12px;word-break:break-all}
+ol{padding-left:20px;margin:6px 0}ol li{margin:4px 0}
+#stopBar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#000;border-top:3px solid var(--purple);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center}
+#np{flex:1;min-width:0}
+#np .l1{font-weight:700;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#np .l2{font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+#stopBtn{padding:16px 22px;font-size:17px;letter-spacing:.06em}
+#fadeBtn{padding:14px 14px;border:2px solid var(--lav);color:var(--lav);font-weight:700;letter-spacing:.08em}
+/* modal */
+#modal{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
+#modal.on{display:flex}
+.sheet{background:var(--panel);border-top:4px solid var(--purple);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom))}
+@media(min-width:700px){#modal{align-items:center}.sheet{border-radius:18px}}
+.trackhead{display:flex;gap:12px;align-items:center}
+.trackhead img{width:64px;height:64px;border-radius:8px;object-fit:cover;background:var(--panel2)}
+.row{display:flex;gap:8px;align-items:center}
+.row > *{flex:1}
+.tbox{display:flex;gap:6px;align-items:center}
+.tbox input{text-align:center;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700}
+.tbox button{flex:0 0 auto;padding:10px 12px}
+.mark{background:var(--lav)!important;color:#000;font-weight:700}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:36px;height:36px;border-radius:50%;border:3px solid transparent;padding:0;outline:1px solid var(--line)}
+.sw.on{border-color:#fff}
+.timeline{position:relative;height:44px;background:var(--panel2);border-radius:10px;margin-top:14px;touch-action:none;cursor:pointer}
+.timeline .sel{position:absolute;top:0;bottom:0;background:rgba(201,182,230,.28);border-left:3px solid #fff;border-right:3px solid var(--lav)}
+.timeline .ph{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff}
+.tl-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:4px;font-variant-numeric:tabular-nums}
+.pos{font-family:Bevan,Arial,serif;font-size:28px;text-align:center;font-variant-numeric:tabular-nums;margin-top:8px}
+.transport{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.actions{display:flex;gap:8px;margin-top:18px}
+.actions .sp{flex:1}
+#toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translateX(-50%);background:#fff;color:var(--purple);font-weight:700;padding:10px 16px;border-radius:10px;z-index:50;display:none;max-width:92vw;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.vol{display:flex;align-items:center;gap:10px}
+.vol input{padding:0}
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <h1>GAME DAY <span>DJ</span></h1>
+    <select id="deviceSel" title="Playback device"><option value="">No device</option></select>
+    <button id="refreshDev" class="ghost" title="Refresh devices">⟳</button>
+  </div>
+  <nav>
+    <button data-v="board" class="on">Board</button>
+    <button data-v="search">Add Songs</button>
+    <button data-v="settings">Setup</button>
+  </nav>
+</header>
+
+<main>
+  <section id="v-board" class="view on">
+    <div class="chips" id="chips"></div>
+    <div id="board"></div>
+  </section>
+
+  <section id="v-search" class="view">
+    <div class="row"><input id="q" placeholder="Search Spotify songs…" enterkeyhint="search"><button id="qBtn" class="primary" style="flex:0 0 auto">Search</button></div>
+    <div id="results" style="margin-top:10px"></div>
+  </section>
+
+  <section id="v-settings" class="view">
+    <div class="card" id="loginCard">
+      <h3>Spotify connection</h3>
+      <div id="loginState" class="small">Not connected.</div>
+      <label>Spotify Client ID</label>
+      <input id="clientId" placeholder="Paste your Client ID">
+      <label>Redirect URI (add this exact value in your Spotify app)</label>
+      <div class="row"><code id="redir"></code><button id="copyRedir" class="ghost" style="flex:0 0 auto">Copy</button></div>
+      <div class="actions"><button id="loginBtn" class="primary">Connect Spotify</button><button id="logoutBtn" class="ghost">Disconnect</button></div>
+    </div>
+
+    <div class="card">
+      <h3>Master volume</h3>
+      <div class="small">Cues fade up to this level, and it's restored after a fade-out.</div>
+      <div class="vol" style="margin-top:8px"><input type="range" id="masterVol" min="0" max="100"><b id="masterVolLbl"></b></div>
+    </div>
+
+    <div class="card">
+      <h3>Backup & share your board</h3>
+      <div class="small">Export your cues to keep a backup or load them on another device.</div>
+      <div class="actions"><button id="expBtn">Export</button><button id="dlBtn">Download .json</button><button id="impBtn">Import</button></div>
+      <textarea id="ioBox" placeholder="Exported JSON appears here. Paste JSON here and tap Import to load a board."></textarea>
+    </div>
+
+    <div class="card">
+      <h3>One-time setup</h3>
+      <ol class="small">
+        <li>Go to <b>developer.spotify.com/dashboard</b>, log in with your Spotify <b>Premium</b> account, and create an app.</li>
+        <li>Under APIs, check <b>Web API</b> and <b>Web Playback SDK</b>.</li>
+        <li>Add the Redirect URI shown above, then save.</li>
+        <li>Copy the app's <b>Client ID</b> into the box above and tap Connect.</li>
+        <li>For anyone else's Spotify login (up to 5 people), add their email under <b>User Management</b>.</li>
+      </ol>
+      <h3 style="margin-top:14px">Game-day tips</h3>
+      <ol class="small">
+        <li><b>Laptop:</b> this page becomes its own player ("Game Day DJ" in the device list). Plug the laptop into the PA.</li>
+        <li><b>Phone/iPad:</b> open the Spotify app and play anything for a second so it shows up as a device, then pick it here. Plug that phone into the PA.</li>
+        <li>Turn <b>Crossfade off</b> and <b>Autoplay off</b> in Spotify settings so nothing bleeds in after a cue.</li>
+        <li>Keyboard: <b>1–9</b> fire the first nine cues, <b>Space</b> fades out, <b>Esc</b> hard-stops.</li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<div id="stopBar">
+  <div id="np"><div class="l1">Ready</div><div class="l2">Tap a cue to play</div></div>
+  <button id="fadeBtn" class="ghost">FADE</button>
+  <button id="stopBtn" class="danger">STOP</button>
+</div>
+
+<div id="modal"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   Game Day DJ — Spotify-powered cue board with custom start/end
+   ========================================================= */
+const API = 'https://api.spotify.com/v1';
+const SCOPES = 'user-read-playback-state user-modify-playback-state streaming user-read-email user-read-private';
+const COLORS = ['#461D7C','#2A0F4D','#5B3290','#C9B6E6','#FFFFFF','#000000'];
+const LIGHT = ['#C9B6E6','#FFFFFF'];
+const tone = c => COLORS.includes(c) ? c : '#461D7C';
+const fgFor = c => LIGHT.includes(tone(c)) ? (tone(c)==='#FFFFFF'?'#461D7C':'#000') : '#fff';
+const DEFAULT_CATS = ['Pregame','Kickoff','Big Play','Touchdown','Defense','Timeout','Victory'];
+const REDIRECT = location.origin + location.pathname;
+const $ = s => document.querySelector(s);
+
+/* ---------- storage ---------- */
+function load(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+const S = Object.assign({clientId:'', cues:[], deviceId:'', volume:85, filter:'All'}, load('gdj_state', {}));
+let TOK = load('gdj_tok', null);
+const persist = () => save('gdj_state', S);
+
+/* ---------- helpers ---------- */
+function toast(msg, ms=2600){ const t=$('#toast'); t.textContent=msg; t.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(()=>t.style.display='none', ms); }
+function fmt(ms){ if(ms==null||isNaN(ms)) return '–'; const neg=ms<0; ms=Math.abs(ms); const t=ms/1000, m=Math.floor(t/60), s=t-m*60; return (neg?'-':'')+m+':'+(s<10?'0':'')+s.toFixed(1); }
+function parseT(str){ str=String(str).trim(); if(!str) return null; const p=str.split(':'); let s=0; for(const x of p){ const n=parseFloat(x); if(isNaN(n)) return null; s=s*60+n; } return Math.round(s*1000); }
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const uid = () => Math.random().toString(36).slice(2,10);
+const esc = s => String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- auth (PKCE) ---------- */
+function b64url(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+async function login(){
+  if(!S.clientId){ toast('Paste your Spotify Client ID first'); return; }
+  const arr = crypto.getRandomValues(new Uint8Array(48));
+  const verifier = b64url(arr);
+  const challenge = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
+  sessionStorage.setItem('gdj_verifier', verifier);
+  const p = new URLSearchParams({response_type:'code', client_id:S.clientId, scope:SCOPES, code_challenge_method:'S256', code_challenge:challenge, redirect_uri:REDIRECT});
+  location.href = 'https://accounts.spotify.com/authorize?' + p;
+}
+async function tokenReq(body){
+  const r = await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(body)});
+  const j = await r.json();
+  if(!r.ok) throw new Error(j.error_description || j.error || 'Token error');
+  TOK = {access:j.access_token, refresh:j.refresh_token || (TOK && TOK.refresh), exp:Date.now() + (j.expires_in-60)*1000};
+  save('gdj_tok', TOK);
+}
+async function handleRedirect(){
+  const p = new URLSearchParams(location.search);
+  if(p.get('error')){ toast('Spotify login: '+p.get('error')); history.replaceState({},'',REDIRECT); return; }
+  const code = p.get('code'); if(!code) return;
+  history.replaceState({},'',REDIRECT);
+  try{
+    await tokenReq({grant_type:'authorization_code', code, redirect_uri:REDIRECT, client_id:S.clientId, code_verifier:sessionStorage.getItem('gdj_verifier')});
+    toast('Connected to Spotify');
+  }catch(e){ toast('Login failed: '+e.message, 5000); }
+}
+async function getToken(){
+  if(!TOK) throw new Error('Not connected — open Setup');
+  if(Date.now() > TOK.exp) await tokenReq({grant_type:'refresh_token', refresh_token:TOK.refresh, client_id:S.clientId});
+  return TOK.access;
+}
+function logout(){ TOK=null; localStorage.removeItem('gdj_tok'); renderLogin(); toast('Disconnected'); }
+
+/* ---------- API ---------- */
+async function api(path, {method='GET', body}={}, retry=true){
+  const tok = await getToken();
+  const r = await fetch(API+path,{method, headers:{Authorization:'Bearer '+tok, ...(body?{'Content-Type':'application/json'}:{})}, body:body?JSON.stringify(body):undefined});
+  if(r.status===401 && retry){ TOK.exp=0; return api(path,{method,body},false); }
+  if(r.status===204 || r.status===202) return null;
+  const txt = await r.text(); let j=null; try{ j = txt?JSON.parse(txt):null; }catch(e){}
+  if(!r.ok){ const err = new Error((j&&j.error&&(j.error.message||j.error))||('HTTP '+r.status)); err.status=r.status; err.reason=j&&j.error&&j.error.reason; throw err; }
+  return j;
+}
+
+/* ---------- Web Playback SDK (desktop browsers) ---------- */
+let sdkPlayer=null, sdkDeviceId=null;
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+function loadSDK(){
+  if(isMobile || !TOK || window.Spotify) return;
+  window.onSpotifyWebPlaybackSDKReady = () => {
+    sdkPlayer = new Spotify.Player({name:'Game Day DJ (this browser)', getOAuthToken: cb => getToken().then(cb).catch(()=>{}), volume:S.volume/100});
+    sdkPlayer.addListener('ready', ({device_id}) => { sdkDeviceId=device_id; if(!S.deviceId){ S.deviceId=device_id; persist(); } refreshDevices(); });
+    sdkPlayer.addListener('not_ready', () => { sdkDeviceId=null; refreshDevices(); });
+    sdkPlayer.addListener('initialization_error', e => console.warn(e.message));
+    sdkPlayer.addListener('authentication_error', e => toast('Spotify auth: '+e.message));
+    sdkPlayer.addListener('account_error', () => toast('Spotify Premium is required for in-browser playback', 5000));
+    sdkPlayer.connect();
+  };
+  const s=document.createElement('script'); s.src='https://sdk.scdn.co/spotify-player.js'; document.head.appendChild(s);
+}
+const usingSDK = () => sdkPlayer && S.deviceId && S.deviceId===sdkDeviceId;
+
+/* ---------- devices ---------- */
+async function refreshDevices(){
+  const sel=$('#deviceSel');
+  if(!TOK){ sel.innerHTML='<option value="">Connect Spotify in Setup</option>'; return; }
+  try{
+    const j = await api('/me/player/devices');
+    const devs = (j&&j.devices)||[];
+    if(sdkDeviceId && !devs.find(d=>d.id===sdkDeviceId)) devs.unshift({id:sdkDeviceId, name:'Game Day DJ (this browser)', type:'Computer'});
+    if(S.deviceId && !devs.find(d=>d.id===S.deviceId)){ const active=devs.find(d=>d.is_active); S.deviceId = active?active.id:(devs[0]?devs[0].id:''); persist(); }
+    if(!S.deviceId && devs[0]){ S.deviceId=devs[0].id; persist(); }
+    sel.innerHTML = devs.length ? devs.map(d=>`<option value="${esc(d.id)}" ${d.id===S.deviceId?'selected':''}>${esc(d.name)} · ${esc(d.type)}</option>`).join('')
+                                : '<option value="">No devices — open Spotify app</option>';
+  }catch(e){ sel.innerHTML='<option value="">'+esc(e.message)+'</option>'; }
+}
+
+/* ---------- playback engine ---------- */
+let seq=0, timers=[], nowCue=null, nowStart=0, nowDur=0, volBlocked=false;
+function clearTimers(){ timers.forEach(clearTimeout); timers=[]; }
+async function setVol(v){
+  v=Math.max(0,Math.min(100,Math.round(v)));
+  if(usingSDK()){ try{ await sdkPlayer.setVolume(v/100); }catch(e){} return; }
+  if(volBlocked) return;
+  try{ await api(`/me/player/volume?volume_percent=${v}&device_id=${encodeURIComponent(S.deviceId)}`,{method:'PUT'}); }
+  catch(e){ if(e.reason==='VOLUME_CONTROL_DISALLOW' || e.status===403){ volBlocked=true; toast('This device blocks volume control — fades disabled (use a laptop for fades)', 4500); } }
+}
+async function ramp(from,to,secs,mySeq){
+  if(!secs || secs<=0){ await setVol(to); return; }
+  if(!usingSDK() && volBlocked) return;
+  const stepMs = usingSDK()?80:250, steps=Math.max(2,Math.round(secs*1000/stepMs));
+  for(let i=1;i<=steps;i++){
+    if(mySeq!==undefined && mySeq!==seq) return;
+    await setVol(from+(to-from)*i/steps);
+    await sleep(stepMs);
+  }
+}
+async function getPos(){
+  try{
+    if(usingSDK()){ const st=await sdkPlayer.getCurrentState(); return st?{pos:st.position, playing:!st.paused, uri:st.track_window&&st.track_window.current_track&&st.track_window.current_track.uri}:null; }
+    const t0=Date.now(); const j=await api('/me/player'); if(!j) return null;
+    return {pos:j.progress_ms + (j.is_playing?(Date.now()-t0)/2:0), playing:j.is_playing, uri:j.item&&j.item.uri};
+  }catch(e){ return null; }
+}
+async function playUri(uri, posMs){
+  if(!S.deviceId) throw new Error('Pick a playback device at the top');
+  if(usingSDK()) try{ sdkPlayer.activateElement && await sdkPlayer.activateElement(); }catch(e){}
+  await api(`/me/player/play?device_id=${encodeURIComponent(S.deviceId)}`,{method:'PUT', body:{uris:[uri], position_ms:Math.max(0,posMs|0)}});
+}
+async function seek(ms){ await api(`/me/player/seek?position_ms=${Math.max(0,ms|0)}&device_id=${encodeURIComponent(S.deviceId)}`,{method:'PUT'}); }
+async function pause(){ try{ await api(`/me/player/pause?device_id=${encodeURIComponent(S.deviceId)}`,{method:'PUT'}); }catch(e){} }
+
+async function playCue(cue){
+  const my=++seq; clearTimers();
+  nowCue=cue; nowStart=performance.now(); nowDur=cue.endMs?Math.max(0,cue.endMs-cue.startMs):(cue.durationMs-cue.startMs);
+  renderNow(); renderBoardState();
+  try{
+    if(cue.fadeIn>0) await setVol(0); else await setVol(S.volume);
+    if(my!==seq) return;
+    await playUri(cue.uri, cue.startMs);
+    if(my!==seq) return;
+    if(cue.fadeIn>0) ramp(0,S.volume,cue.fadeIn,my);
+    // verify the device actually landed on the start point (some devices ignore position_ms on wake-up)
+    await sleep(350);
+    let p=await getPos();
+    if(my!==seq) return;
+    let pos = p&&p.uri===cue.uri ? p.pos : cue.startMs;
+    if(Math.abs(pos-cue.startMs)>1500){ await seek(cue.startMs); pos=cue.startMs; }
+    nowStart = performance.now() - (pos-cue.startMs);
+    if(cue.endMs){
+      const remain = cue.endMs - pos;
+      const fo = (cue.fadeOut||0)*1000;
+      if(fo>0 && remain>fo) timers.push(setTimeout(()=>{ if(my===seq) ramp(S.volume,0,cue.fadeOut,my); }, remain-fo));
+      timers.push(setTimeout(async()=>{ if(my!==seq) return; seq++; await pause(); await setVol(S.volume); nowCue=null; renderNow(); renderBoardState(); }, Math.max(0,remain)));
+    }
+  }catch(e){
+    if(my===seq){ nowCue=null; renderNow(); renderBoardState(); }
+    toast(e.status===404?'Device not found — open Spotify on it and tap ⟳':e.message, 4500);
+  }
+}
+async function stopAll(fade){
+  const cue=nowCue; const my=++seq; clearTimers();
+  if(fade){ const secs = cue&&cue.fadeOut>0?cue.fadeOut:2; await ramp(S.volume,0,secs,my); }
+  if(my!==seq && fade) return;
+  await pause(); await setVol(S.volume);
+  nowCue=null; renderNow(); renderBoardState();
+}
+
+/* ---------- now playing / progress ---------- */
+function renderNow(){
+  const np=$('#np');
+  if(!nowCue){ np.innerHTML='<div class="l1">Ready</div><div class="l2">Tap a cue to play</div>'; return; }
+  np.innerHTML=`<div class="l1">▶ ${esc(nowCue.name)}</div><div class="l2" id="npTime"></div>`;
+}
+function tick(){
+  if(nowCue){
+    const el=performance.now()-nowStart;
+    const t=$('#npTime'); if(t) t.textContent=`${fmt(el)} / ${fmt(nowDur)} · ${nowCue.title}`;
+    const b=document.querySelector(`.cue[data-id="${nowCue.id}"] .bar`); if(b&&nowDur) b.style.width=Math.min(100,el/nowDur*100)+'%';
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ---------- board ---------- */
+function cats(){ const seen=[]; S.cues.forEach(c=>{ if(!seen.includes(c.cat)) seen.push(c.cat); }); return seen; }
+function visibleCues(){ return S.filter==='All'?S.cues:S.cues.filter(c=>c.cat===S.filter); }
+function renderBoard(){
+  const cs=cats(); if(S.filter!=='All' && !cs.includes(S.filter)) S.filter='All';
+  $('#chips').innerHTML = cs.length>1 ? ['All',...cs].map(c=>`<button class="chip ${c===S.filter?'on':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('') : '';
+  const b=$('#board');
+  if(!S.cues.length){ b.innerHTML=`<div class="empty">No cues yet.<br><br>${TOK?'Tap <b>Add Songs</b> to search Spotify and build your board.':'Start in <b>Setup</b> to connect Spotify.'}</div>`; return; }
+  const vis=visibleCues(); let n=0, html='';
+  (S.filter==='All'?cs:[S.filter]).forEach(cat=>{
+    html+=`<div class="cat">${esc(cat)}</div><div class="grid">`;
+    vis.filter(c=>c.cat===cat).forEach(c=>{ n++;
+      html+=`<button class="cue ${['#2A0F4D','#000000'].includes(tone(c.color))?'dk':''}" data-id="${c.id}" style="--c:${tone(c.color)};--fg:${fgFor(c.color)}">
+        ${n<=9?`<span class="key">${n}</span>`:''}
+        <span class="ed" data-edit="${c.id}">✎</span>
+        <div><div class="nm">${esc(c.name)}</div><div class="tr">${esc(c.title)} — ${esc(c.artist)}</div></div>
+        <div class="rg">${fmt(c.startMs)} → ${c.endMs?fmt(c.endMs):'end'}${c.fadeIn?` · in ${c.fadeIn}s`:''}${c.fadeOut?` · out ${c.fadeOut}s`:''}</div>
+        <div class="bar"></div></button>`;
+    });
+    html+='</div>';
+  });
+  b.innerHTML=html; renderBoardState();
+}
+function renderBoardState(){ document.querySelectorAll('.cue').forEach(el=>{ const on = nowCue&&el.dataset.id===nowCue.id; el.classList.toggle('playing',!!on); if(!on){ const bar=el.querySelector('.bar'); if(bar) bar.style.width='0'; } }); }
+function orderedVisible(){ const cs=S.filter==='All'?cats():[S.filter]; const v=visibleCues(); return cs.flatMap(c=>v.filter(x=>x.cat===c)); }
+
+$('#board').addEventListener('click', e=>{
+  const ed=e.target.closest('[data-edit]'); if(ed){ e.stopPropagation(); openEditor(S.cues.find(c=>c.id===ed.dataset.edit)); return; }
+  const btn=e.target.closest('.cue'); if(!btn) return;
+  const cue=S.cues.find(c=>c.id===btn.dataset.id);
+  if(nowCue && nowCue.id===cue.id) stopAll(true); else playCue(cue);
+});
+$('#chips').addEventListener('click', e=>{ const c=e.target.closest('.chip'); if(!c) return; S.filter=c.dataset.cat; persist(); renderBoard(); });
+
+/* ---------- search ---------- */
+async function doSearch(){
+  const q=$('#q').value.trim(); if(!q) return;
+  const box=$('#results'); box.innerHTML='<div class="small">Searching…</div>';
+  try{
+    const j=await api('/search?type=track&limit=10&q='+encodeURIComponent(q));
+    const items=(j.tracks&&j.tracks.items)||[];
+    if(!items.length){ box.innerHTML='<div class="empty">No matches.</div>'; return; }
+    box._items=items;
+    box.innerHTML=items.map((t,i)=>{ const img=t.album&&t.album.images&&t.album.images.length?t.album.images[t.album.images.length-1].url:'';
+      return `<div class="res"><img src="${esc(img)}" alt=""><div class="meta"><div class="t">${esc(t.name)}</div><div class="a">${esc(t.artists.map(a=>a.name).join(', '))} · ${fmt(t.duration_ms).replace(/\.\d$/,'')}</div></div>
+      <button class="ghost" data-prev="${i}">▶</button><button class="primary" data-add="${i}">Add</button></div>`; }).join('');
+  }catch(e){ box.innerHTML=`<div class="empty">${esc(e.message)}</div>`; }
+}
+$('#qBtn').onclick=doSearch;
+$('#q').addEventListener('keydown',e=>{ if(e.key==='Enter') doSearch(); });
+$('#results').addEventListener('click', async e=>{
+  const box=$('#results'), a=e.target.closest('[data-add]'), p=e.target.closest('[data-prev]');
+  if(p){ const t=box._items[+p.dataset.prev]; try{ ++seq; clearTimers(); await setVol(S.volume); await playUri(t.uri,0); }catch(err){ toast(err.message); } }
+  if(a){ const t=box._items[+a.dataset.add];
+    openEditor({id:null, name:t.name.split(' (')[0].split(' - ')[0], cat:S.filter!=='All'?S.filter:(cats()[0]||'Pregame'), color:COLORS[S.cues.length%COLORS.length],
+      uri:t.uri, title:t.name, artist:t.artists.map(x=>x.name).join(', '), art:(t.album.images[1]||t.album.images[0]||{}).url||'',
+      durationMs:t.duration_ms, startMs:0, endMs:Math.min(t.duration_ms,30000), fadeIn:0, fadeOut:2});
+  }
+});
+
+/* ---------- cue editor ---------- */
+let E=null, edPoll=null;
+function openEditor(cue){
+  E=JSON.parse(JSON.stringify(cue));
+  const allCats=[...new Set([...cats(),...DEFAULT_CATS])];
+  $('#sheet').innerHTML=`
+    <div class="trackhead"><img src="${esc(E.art)}" alt=""><div style="min-width:0"><div style="font-weight:700">${esc(E.title)}</div><div class="small">${esc(E.artist)} · ${fmt(E.durationMs)}</div></div></div>
+    <label>Button name</label><input id="eName" value="${esc(E.name)}" placeholder="e.g. Kickoff, 3rd Down, TD!">
+    <div class="row">
+      <div><label>Category</label><input id="eCat" list="catList" value="${esc(E.cat)}"><datalist id="catList">${allCats.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>
+    </div>
+    <label>Color</label><div class="swatches">${COLORS.map(c=>`<button class="sw ${c===tone(E.color)?'on':''}" data-col="${c}" style="background:${c}"></button>`).join('')}</div>
+
+    <div class="pos" id="ePos">–</div>
+    <div class="timeline" id="eTl"><div class="sel" id="eSel"></div><div class="ph" id="ePh"></div></div>
+    <div class="tl-lbl"><span>0:00</span><span class="small">tap timeline to seek</span><span>${fmt(E.durationMs)}</span></div>
+    <div class="transport">
+      <button id="ePlayStart">▶ From start</button>
+      <button id="eTest" class="primary">▶ Test cue</button>
+      <button id="ePause">❚❚ Pause</button>
+    </div>
+    <div class="transport" style="grid-template-columns:repeat(4,1fr)">
+      <button data-jog="-5000">−5s</button><button data-jog="-1000">−1s</button><button data-jog="1000">+1s</button><button data-jog="5000">+5s</button>
+    </div>
+
+    <label>Start point</label>
+    <div class="tbox"><button data-n="start" data-d="-500">−</button><input id="eStart" inputmode="decimal" value="${fmt(E.startMs)}"><button data-n="start" data-d="500">+</button><button class="mark" id="mStart">Mark now</button></div>
+    <label>End point <span style="text-transform:none">(blank = play to end of song)</span></label>
+    <div class="tbox"><button data-n="end" data-d="-500">−</button><input id="eEnd" inputmode="decimal" value="${E.endMs?fmt(E.endMs):''}"><button data-n="end" data-d="500">+</button><button class="mark" id="mEnd">Mark now</button></div>
+    <div class="small" style="margin-top:6px" id="eLen"></div>
+    <div class="row">
+      <div><label>Fade in (sec)</label><input id="eFi" type="number" min="0" max="10" step="0.5" value="${E.fadeIn||0}"></div>
+      <div><label>Fade out (sec)</label><input id="eFo" type="number" min="0" max="15" step="0.5" value="${E.fadeOut||0}"></div>
+    </div>
+    <div class="actions">
+      ${E.id?'<button class="ghost" id="eDel" style="color:var(--red)">Delete</button><button class="ghost" id="eDup">Duplicate</button>':''}
+      <span class="sp"></span><button class="ghost" id="eCancel">Cancel</button><button class="primary" id="eSave">Save</button>
+    </div>`;
+  $('#modal').classList.add('on');
+  drawTl(null); updLen();
+  clearInterval(edPoll); edPoll=setInterval(pollEditor, usingSDK()?250:1000);
+}
+function closeEditor(){ $('#modal').classList.remove('on'); clearInterval(edPoll); E=null; }
+function readTimes(){ const s=parseT($('#eStart').value), e=parseT($('#eEnd').value); if(s!=null) E.startMs=Math.max(0,Math.min(s,E.durationMs)); E.endMs = e==null?null:Math.max(0,Math.min(e,E.durationMs)); }
+function setTimes(){ $('#eStart').value=fmt(E.startMs); $('#eEnd').value=E.endMs?fmt(E.endMs):''; drawTl(lastPos); updLen(); }
+function updLen(){ const end=E.endMs||E.durationMs; $('#eLen').textContent = end<=E.startMs ? '⚠ End must be after start' : `Cue length: ${fmt(end-E.startMs)}`; }
+let lastPos=null;
+function drawTl(pos){
+  const d=E.durationMs, end=E.endMs||d;
+  const sel=$('#eSel'); if(!sel) return;
+  sel.style.left=(E.startMs/d*100)+'%'; sel.style.width=Math.max(0,(end-E.startMs)/d*100)+'%';
+  $('#ePh').style.display = pos==null?'none':'block'; if(pos!=null) $('#ePh').style.left=(pos/d*100)+'%';
+  $('#ePos').textContent = pos==null?'–':fmt(pos);
+}
+async function pollEditor(){ if(!E) return; const p=await getPos(); if(!E) return; lastPos = p && p.uri===E.uri ? p.pos : null; drawTl(lastPos); }
+async function markNow(which){ const p=await getPos(); if(!p||p.uri!==E.uri){ toast('Play this song first, then tap Mark'); return; } const v=Math.round(p.pos/100)*100; if(which==='start') E.startMs=v; else E.endMs=v; setTimes(); }
+
+$('#sheet').addEventListener('click', async e=>{
+  if(!E) return; const t=e.target;
+  const col=t.closest('[data-col]'); if(col){ E.color=col.dataset.col; document.querySelectorAll('.sw').forEach(s=>s.classList.toggle('on',s===col)); return; }
+  const n=t.closest('[data-n]'); if(n){ readTimes(); const d=+n.dataset.d; if(n.dataset.n==='start') E.startMs=Math.max(0,E.startMs+d); else E.endMs=Math.max(0,(E.endMs||E.durationMs)+d); setTimes(); return; }
+  const j=t.closest('[data-jog]'); if(j){ const p=await getPos(); if(p&&p.uri===E.uri){ try{ await seek(p.pos+ +j.dataset.jog); }catch(err){ toast(err.message); } } else toast('Play the song first'); pollEditor(); return; }
+  switch(t.id){
+    case 'ePlayStart': readTimes(); ++seq; clearTimers(); nowCue=null; renderNow(); try{ await setVol(S.volume); await playUri(E.uri,E.startMs); }catch(err){ toast(err.message); } break;
+    case 'eTest': readTimes(); collect(); playCue({...E, id:E.id||'__test'}); break;
+    case 'ePause': ++seq; clearTimers(); await pause(); nowCue=null; renderNow(); break;
+    case 'mStart': markNow('start'); break;
+    case 'mEnd': markNow('end'); break;
+    case 'eCancel': closeEditor(); break;
+    case 'eSave': readTimes(); collect(); if((E.endMs||E.durationMs)<=E.startMs){ toast('End must be after start'); return; }
+      if(E.id){ S.cues[S.cues.findIndex(c=>c.id===E.id)]=E; } else { E.id=uid(); S.cues.push(E); }
+      if(S.filter!=='All' && S.filter!==E.cat) S.filter='All';
+      persist(); closeEditor(); renderBoard(); show('board'); toast('Saved'); break;
+    case 'eDel': S.cues=S.cues.filter(c=>c.id!==E.id); persist(); closeEditor(); renderBoard(); break;
+    case 'eDup': { const c={...E,id:uid(),name:E.name+' (2)'}; readTimes(); collect(); c.startMs=E.startMs; c.endMs=E.endMs; S.cues.push(c); persist(); closeEditor(); renderBoard(); toast('Duplicated'); } break;
+  }
+});
+function collect(){ E.name=$('#eName').value.trim()||E.title; E.cat=$('#eCat').value.trim()||'Other'; E.fadeIn=Math.max(0,parseFloat($('#eFi').value)||0); E.fadeOut=Math.max(0,parseFloat($('#eFo').value)||0); }
+$('#sheet').addEventListener('change', e=>{ if(e.target.id==='eStart'||e.target.id==='eEnd'){ readTimes(); setTimes(); } });
+$('#sheet').addEventListener('pointerdown', async e=>{
+  const tl=e.target.closest('#eTl'); if(!tl||!E) return;
+  const r=tl.getBoundingClientRect(); const ms=Math.round((e.clientX-r.left)/r.width*E.durationMs);
+  const p=await getPos();
+  try{ if(p&&p.uri===E.uri) await seek(ms); else { ++seq; await setVol(S.volume); await playUri(E.uri,ms); } }catch(err){ toast(err.message); }
+  pollEditor();
+});
+$('#modal').addEventListener('click', e=>{ if(e.target.id==='modal') closeEditor(); });
+
+/* ---------- settings ---------- */
+function renderLogin(){
+  $('#clientId').value=S.clientId||''; $('#redir').textContent=REDIRECT;
+  $('#loginState').innerHTML = TOK ? '<span style="color:var(--lav)">● Connected</span>' : 'Not connected.';
+  $('#loginBtn').textContent = TOK ? 'Reconnect' : 'Connect Spotify';
+}
+$('#clientId').addEventListener('change', e=>{ S.clientId=e.target.value.trim(); persist(); });
+$('#loginBtn').onclick=()=>{ S.clientId=$('#clientId').value.trim(); persist(); login(); };
+$('#logoutBtn').onclick=logout;
+$('#copyRedir').onclick=()=>navigator.clipboard.writeText(REDIRECT).then(()=>toast('Copied')).catch(()=>toast('Copy failed — select it manually'));
+$('#masterVol').value=S.volume; $('#masterVolLbl').textContent=S.volume;
+$('#masterVol').addEventListener('input', e=>{ S.volume=+e.target.value; $('#masterVolLbl').textContent=S.volume; });
+$('#masterVol').addEventListener('change', ()=>{ persist(); setVol(S.volume); });
+$('#expBtn').onclick=()=>{ $('#ioBox').value=JSON.stringify({app:'gameday-dj',version:1,cues:S.cues},null,1); $('#ioBox').select(); toast('Exported — copy the text'); };
+$('#dlBtn').onclick=()=>{ const blob=new Blob([JSON.stringify({app:'gameday-dj',version:1,cues:S.cues},null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='gameday-dj-board.json'; a.click(); };
+$('#impBtn').onclick=()=>{ try{ const j=JSON.parse($('#ioBox').value); const cues=Array.isArray(j)?j:j.cues; if(!Array.isArray(cues)) throw 0; S.cues=cues.map(c=>({...c,id:c.id||uid()})); persist(); renderBoard(); toast(`Imported ${cues.length} cues`); }catch(e){ toast('That doesn\'t look like a board export'); } };
+
+/* ---------- nav, device, keys ---------- */
+function show(v){ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id==='v-'+v)); if(v==='search') setTimeout(()=>$('#q').focus(),50); }
+document.querySelector('nav').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b) show(b.dataset.v); });
+$('#deviceSel').addEventListener('change', async e=>{ S.deviceId=e.target.value; persist(); volBlocked=false;
+  try{ await api('/me/player',{method:'PUT',body:{device_ids:[S.deviceId],play:false}}); toast('Device selected'); }catch(err){} });
+$('#refreshDev').onclick=refreshDevices;
+$('#stopBtn').onclick=()=>stopAll(false);
+$('#fadeBtn').onclick=()=>stopAll(true);
+document.addEventListener('keydown', e=>{
+  if(e.target.matches('input,textarea,select')) return;
+  if(e.key==='Escape'){ e.preventDefault(); if(E) closeEditor(); else stopAll(false); }
+  else if(e.key===' '){ e.preventDefault(); stopAll(true); }
+  else if(/^[1-9]$/.test(e.key) && !E){ const c=orderedVisible()[+e.key-1]; if(c) playCue(c); }
+});
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && TOK) refreshDevices(); });
+
+/* ---------- boot ---------- */
+(async()=>{
+  await handleRedirect();
+  renderLogin(); renderBoard(); renderNow(); requestAnimationFrame(tick);
+  if(TOK){ loadSDK(); refreshDevices(); } else show('settings');
+})();
+</script>
+</body>
+</html>
